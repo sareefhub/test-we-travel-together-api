@@ -9,6 +9,7 @@ from app.schemas.province_schema import ProvinceOut, ProvinceCreate, ProvinceUpd
 
 router = APIRouter(prefix="/provinces", tags=["provinces"])
 
+
 @router.get(
     "",
     response_model=List[ProvinceOut],
@@ -50,12 +51,12 @@ async def create_province(
     province_in: ProvinceCreate,
     session: AsyncSession = Depends(get_session),
 ) -> ProvinceOut:
-    # ProvModel.root_validator จะจัดการ discount_rate & flags ให้เอง
-    province = ProvModel(**province_in.model_dump())
-    session.add(province)
+    # สร้าง ORM object ได้โดยไม่ต้องมี id ใน input
+    db_province = ProvModel(**province_in.dict())
+    session.add(db_province)
     await session.commit()
-    await session.refresh(province)
-    return province
+    await session.refresh(db_province)
+    return db_province
 
 
 @router.put(
@@ -73,11 +74,10 @@ async def update_province(
     if not province:
         raise HTTPException(status_code=404, detail="Province not found")
 
-    update_data = province_in.model_dump(exclude_unset=True)
+    update_data = province_in.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(province, key, value)
 
-    # ProvModel.root_validator จะรันอีกครั้งตอน validation/commit
     session.add(province)
     await session.commit()
     await session.refresh(province)
