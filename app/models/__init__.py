@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 # Import models after setting up the database components
 from .registration_model import *
 from .province_model import *
+from .tax_reduction_model import *
 
 connect_args = {"check_same_thread": False}
 

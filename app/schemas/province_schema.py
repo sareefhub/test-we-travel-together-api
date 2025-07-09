@@ -1,11 +1,11 @@
-from pydantic import BaseModel, root_validator
-from typing import Optional
+from pydantic import BaseModel, model_validator
 from enum import Enum
+from typing import Optional
 
 class ProvinceCategory(str, Enum):
-    primary = "primary"
+    primary   = "primary"
     secondary = "secondary"
-    target = "target"
+    target    = "target"
 
 class ProvinceBase(BaseModel):
     name: str
@@ -15,28 +15,18 @@ class ProvinceBase(BaseModel):
     is_primary: Optional[bool] = False
     is_secondary: Optional[bool] = False
 
-    @root_validator(pre=True)
-    def apply_category_defaults(cls, values):
-        cat = values.get("category")
-        # จังหวัดหลัก → ส่วนลด 10%
-        if cat == ProvinceCategory.primary:
-            values["discount_rate"] = 0.10
-            values["is_primary"] = True
-            values["is_secondary"] = False
-            values["is_target"] = False
-        # จังหวัดรอง → ส่วนลด 20%
-        elif cat == ProvinceCategory.secondary:
-            values["discount_rate"] = 0.20
-            values["is_primary"] = False
-            values["is_secondary"] = True
-            values["is_target"] = False
-        # จังหวัดเป้าหมาย (default) → ส่วนลดตาม field หรือ 0
+    @model_validator(mode="after")
+    def apply_category_defaults(cls, m: "ProvinceBase") -> "ProvinceBase":
+        m.is_primary = m.is_secondary = m.is_target = False
+        if m.category is ProvinceCategory.primary:
+            m.discount_rate = 0.10
+            m.is_primary = True
+        elif m.category is ProvinceCategory.secondary:
+            m.discount_rate = 0.20
+            m.is_secondary = True
         else:
-            values["is_primary"] = False
-            values["is_secondary"] = False
-            values["is_target"] = True
-            # discount_rate ยังคงใช้ค่าที่ส่งมา (default 0.0)
-        return values
+            m.is_target = True
+        return m
 
 class ProvinceCreate(ProvinceBase):
     pass
@@ -49,3 +39,4 @@ class ProvinceOut(ProvinceBase):
 
     class Config:
         from_attributes = True
+        validate_by_name    = True
