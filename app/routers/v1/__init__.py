@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 from .registration_router import router as registration_router
+from .province_router import router as province_router
 
 router = APIRouter(prefix="/v1")
 router.include_router(registration_router)
+router.include_router(province_router)

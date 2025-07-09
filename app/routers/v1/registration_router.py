@@ -1,4 +1,7 @@
-from typing import Optional, List
+# app/api/registration_router.py
+
+from typing import List, Optional
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -13,6 +16,7 @@ from app.models.registration_model import Registration as RegistrationModel
 
 router = APIRouter(prefix="/registrations", tags=["registrations"])
 
+
 @router.get(
     "",
     summary="Get all registrations",
@@ -25,7 +29,7 @@ async def get_registrations(
     tax_year: Optional[int] = None,
     session: AsyncSession = Depends(get_session),
 ) -> List[Registration]:
-    """Get all registrations with optional pagination and filtering by tax_year."""
+    # Query ด้วย select, filter ตาม tax_year ถ้ามี
     query = select(RegistrationModel)
     if tax_year is not None:
         query = query.where(RegistrationModel.tax_year == tax_year)
@@ -33,7 +37,9 @@ async def get_registrations(
 
     result = await session.exec(query)
     regs = result.all()
+    # แปลงเป็น Pydantic model
     return [Registration.model_validate(r) for r in regs]
+
 
 @router.get(
     "/{registration_id}",
@@ -45,11 +51,15 @@ async def get_registration(
     registration_id: int,
     session: AsyncSession = Depends(get_session),
 ) -> Registration:
-    """Get a single registration by ID."""
+    # อ่านจาก DB
     reg = await session.get(RegistrationModel, registration_id)
     if not reg:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Registration not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration not found"
+        )
     return Registration.model_validate(reg)
+
 
 @router.post(
     "",
@@ -62,12 +72,13 @@ async def create_registration(
     registration_in: RegistrationCreate,
     session: AsyncSession = Depends(get_session),
 ) -> Registration:
-    """Create a new registration."""
+    # สร้าง instance แล้วบันทึก
     db_reg = RegistrationModel(**registration_in.model_dump())
     session.add(db_reg)
     await session.commit()
     await session.refresh(db_reg)
     return Registration.model_validate(db_reg)
+
 
 @router.put(
     "/{registration_id}",
@@ -80,18 +91,27 @@ async def update_registration(
     registration_up: RegistrationUpdate,
     session: AsyncSession = Depends(get_session),
 ) -> Registration:
-    """Update an existing registration."""
+    # ดึง record เดิม
     db_reg = await session.get(RegistrationModel, registration_id)
     if not db_reg:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Registration not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration not found"
+        )
 
+    # นำข้อมูลจาก body มาอัปเดตเฉพาะ field ที่ส่งมา
     update_data = registration_up.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_reg, field, value)
 
+    # ตั้ง updated_at อัตโนมัติ
+    db_reg.updated_at = datetime.utcnow()
+
+    session.add(db_reg)
     await session.commit()
     await session.refresh(db_reg)
     return Registration.model_validate(db_reg)
+
 
 @router.delete(
     "/{registration_id}",
@@ -103,10 +123,13 @@ async def delete_registration(
     registration_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    """Delete a registration."""
+    # ดึง record แล้วลบทิ้ง
     db_reg = await session.get(RegistrationModel, registration_id)
     if not db_reg:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Registration not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration not found"
+        )
 
     await session.delete(db_reg)
     await session.commit()
