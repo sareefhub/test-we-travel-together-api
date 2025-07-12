@@ -1,8 +1,7 @@
-# app/schemas/province_schema.py
-
 from typing import Optional
 from enum import Enum
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Field
+from pydantic import field_validator
 
 class ProvinceCategory(str, Enum):
     primary = "primary"
@@ -11,22 +10,25 @@ class ProvinceCategory(str, Enum):
 class ProvinceBase(SQLModel):
     name: str
     category: ProvinceCategory
-    discount_rate: Optional[float] = 0.0
-    is_target: bool = False
+    discount_rate: str = Field(default="0%")
+
+    @field_validator("discount_rate")
+    def ensure_percent_format(cls, v: str) -> str:
+        if not v.endswith("%"):
+            raise ValueError("discount_rate must end with '%' (e.g. '10%')")
+        return v
 
 class ProvinceCreate(ProvinceBase):
-    """POST body: name, category, discount_rate, is_target"""
     pass
 
 class ProvinceRead(ProvinceBase):
-    """What we return: + id, is_primary, is_secondary"""
     id: int
     is_primary: bool
     is_secondary: bool
 
+    model_config = {"from_attributes": True}
+
 class ProvinceUpdate(SQLModel):
-    """PUT/PATCH body: any of name, category, discount_rate, is_target"""
     name: Optional[str] = None
     category: Optional[ProvinceCategory] = None
-    discount_rate: Optional[float] = None
-    is_target: Optional[bool] = None
+    discount_rate: Optional[str] = None
