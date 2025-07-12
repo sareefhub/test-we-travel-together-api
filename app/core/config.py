@@ -1,15 +1,12 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    SQLDB_URL: str
-    SECRET_KEY: str = "secret"
+    database_url: str
+    jwt_secret_key: str
+    secret_key: str
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5 * 60  # 5 minutes
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 7 * 24 * 60  # 7 days
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
-    model_config = {"env_file": ".env", "validate_assignment": True, "extra": "allow"}
-
-
-def get_settings():
-    return Settings()
+settings = Settings()

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .registration_router import router as registration_router
+from .authentication_router import router as registration_router
 from .province_router import router as province_router
 from .tax_reduction_router import router as tax_reduction_router
 
