@@ -9,7 +9,10 @@ from app.database import get_session
 from app.models.user_model import User
 from app.core.security import create_access_token
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(
+    prefix="/v1/authentication",
+    tags=["authentication"],
+)
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(

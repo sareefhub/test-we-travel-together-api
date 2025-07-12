@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.database import get_session
 from app.models.user_model import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/authentication/login")
 
 def create_access_token(data: dict) -> str:
     return jwt.encode(data, settings.jwt_secret_key, algorithm="HS256")
