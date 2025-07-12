@@ -1,42 +1,32 @@
-from pydantic import BaseModel, model_validator
-from enum import Enum
+# app/schemas/province_schema.py
+
 from typing import Optional
+from enum import Enum
+from sqlmodel import SQLModel
 
 class ProvinceCategory(str, Enum):
-    primary   = "primary"
+    primary = "primary"
     secondary = "secondary"
-    target    = "target"
 
-class ProvinceBase(BaseModel):
+class ProvinceBase(SQLModel):
     name: str
     category: ProvinceCategory
-    discount_rate: float = 0.0
-    is_target: Optional[bool] = False
-    is_primary: Optional[bool] = False
-    is_secondary: Optional[bool] = False
-
-    @model_validator(mode="after")
-    def apply_category_defaults(cls, m: "ProvinceBase") -> "ProvinceBase":
-        m.is_primary = m.is_secondary = m.is_target = False
-        if m.category is ProvinceCategory.primary:
-            m.discount_rate = 0.10
-            m.is_primary = True
-        elif m.category is ProvinceCategory.secondary:
-            m.discount_rate = 0.20
-            m.is_secondary = True
-        else:
-            m.is_target = True
-        return m
+    discount_rate: Optional[float] = 0.0
+    is_target: bool = False
 
 class ProvinceCreate(ProvinceBase):
+    """POST body: name, category, discount_rate, is_target"""
     pass
 
-class ProvinceUpdate(ProvinceBase):
-    pass
-
-class ProvinceOut(ProvinceBase):
+class ProvinceRead(ProvinceBase):
+    """What we return: + id, is_primary, is_secondary"""
     id: int
+    is_primary: bool
+    is_secondary: bool
 
-    class Config:
-        from_attributes = True
-        validate_by_name    = True
+class ProvinceUpdate(SQLModel):
+    """PUT/PATCH body: any of name, category, discount_rate, is_target"""
+    name: Optional[str] = None
+    category: Optional[ProvinceCategory] = None
+    discount_rate: Optional[float] = None
+    is_target: Optional[bool] = None

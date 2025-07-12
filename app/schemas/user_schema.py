@@ -1,3 +1,5 @@
+# app/schemas/user_schema.py
+
 from typing import Optional
 from pydantic import BaseModel, EmailStr, ConfigDict
 
@@ -10,12 +12,14 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: int
+
+    # บอก Pydantic ให้ดึงข้อมูลจาก attribute ของโมเดล SQLModel
     model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
-    username: Optional[str]
-    email: Optional[EmailStr]
-    password: Optional[str]
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str

@@ -1,14 +1,16 @@
-from typing import Optional
-from sqlmodel import SQLModel, Field
+from typing import Optional, TYPE_CHECKING
+from sqlmodel import SQLModel, Field, Relationship
+
+if TYPE_CHECKING:
+    from .profile_model import Profile
 
 class Province(SQLModel, table=True):
-    # แก้ตรงนี้: กำหนด id ให้ Optional พร้อม default=None
     id: Optional[int] = Field(default=None, primary_key=True)
-
     name: str
     category: str
-    discount_rate: float
+    discount_rate: float = Field(default=0.0)
+    is_primary: bool = Field(default=False)
+    is_secondary: bool = Field(default=False)
+    is_target: bool = Field(default=False)
 
-    is_primary: bool = False
-    is_secondary: bool = False
-    is_target: bool = False
+    profiles: list["Profile"] = Relationship(back_populates="target_province")

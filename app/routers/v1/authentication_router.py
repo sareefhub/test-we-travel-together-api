@@ -10,7 +10,7 @@ from app.models.user_model import User
 from app.core.security import create_access_token
 
 router = APIRouter(
-    prefix="/v1/authentication",
+    prefix="/authentication",
     tags=["authentication"],
 )
 
