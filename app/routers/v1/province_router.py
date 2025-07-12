@@ -1,5 +1,3 @@
-# app/routers/v1/province_router.py
-
 from typing import List, Union
 from fastapi import APIRouter, Depends, Body, HTTPException, status
 from sqlmodel import select
@@ -21,7 +19,6 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)],
 )
 
-
 @router.post(
     "/",
     response_model=Union[ProvinceRead, List[ProvinceRead]],
@@ -35,9 +32,13 @@ async def create_province(
     created: List[Province] = []
 
     for data in items:
-        prov = Province.model_validate(data.model_dump())
-        prov.is_primary = data.category == ProvinceCategory.primary
-        prov.is_secondary = data.category == ProvinceCategory.secondary
+        prov = Province(
+            name=data.name,
+            category=data.category.value,
+            discount_rate=data.discount_rate,
+            is_primary=data.category == ProvinceCategory.primary,
+            is_secondary=data.category == ProvinceCategory.secondary,
+        )
         session.add(prov)
         created.append(prov)
 
@@ -47,12 +48,10 @@ async def create_province(
 
     return created if isinstance(payload, list) else created[0]
 
-
 @router.get("/", response_model=List[ProvinceRead])
 async def list_provinces(session: AsyncSession = Depends(get_session)):
     result = await session.exec(select(Province))
     return result.all()
-
 
 @router.get("/{province_id}", response_model=ProvinceRead)
 async def read_province(
@@ -64,7 +63,6 @@ async def read_province(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Province not found")
     return prov
 
-
 @router.put("/{province_id}", response_model=ProvinceRead)
 async def replace_province(
     province_id: int,
@@ -75,19 +73,20 @@ async def replace_province(
     if not prov:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Province not found")
 
-    for key, val in payload.model_dump(exclude_unset=False).items():
-        if val is not None:
-            setattr(prov, key, val)
-
-    if payload.category is not None:
-        prov.is_primary = payload.category == ProvinceCategory.primary
-        prov.is_secondary = payload.category == ProvinceCategory.secondary
+    data = payload.model_dump(exclude_unset=False)
+    if data.get("name") is not None:
+        prov.name = data["name"]
+    if data.get("category") is not None:
+        prov.category = data["category"].value
+        prov.is_primary = data["category"] == ProvinceCategory.primary
+        prov.is_secondary = data["category"] == ProvinceCategory.secondary
+    if data.get("discount_rate") is not None:
+        prov.discount_rate = data["discount_rate"]
 
     session.add(prov)
     await session.commit()
     await session.refresh(prov)
     return prov
-
 
 @router.patch("/{province_id}", response_model=ProvinceRead)
 async def update_province(
@@ -99,18 +98,20 @@ async def update_province(
     if not prov:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Province not found")
 
-    for key, val in payload.dict(exclude_unset=True).items():
-        setattr(prov, key, val)
-
-    if payload.category is not None:
-        prov.is_primary = payload.category == ProvinceCategory.primary
-        prov.is_secondary = payload.category == ProvinceCategory.secondary
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data:
+        prov.name = data["name"]
+    if "category" in data:
+        prov.category = data["category"].value
+        prov.is_primary = data["category"] == ProvinceCategory.primary
+        prov.is_secondary = data["category"] == ProvinceCategory.secondary
+    if "discount_rate" in data:
+        prov.discount_rate = data["discount_rate"]
 
     session.add(prov)
     await session.commit()
     await session.refresh(prov)
     return prov
-
 
 @router.delete("/{province_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_province(

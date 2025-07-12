@@ -1,8 +1,9 @@
-from typing import Optional, TYPE_CHECKING
+# app/models/user_model.py
+
+from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 
-if TYPE_CHECKING:
-    from .profile_model import Profile
+from .province_target_model import ProvinceTarget
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -10,5 +11,4 @@ class User(SQLModel, table=True):
     email: str = Field(index=True, unique=True)
     hashed_password: str
 
-    # forward-reference relationship ไปหา Profile
-    profile: Optional["Profile"] = Relationship(back_populates="user")
+    targets: List[ProvinceTarget] = Relationship(back_populates="user")
