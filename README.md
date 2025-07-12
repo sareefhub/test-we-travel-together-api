@@ -1,5 +1,7 @@
 # We Travel Together API
 
+**Created by:** Sareef Masamaeng | Student ID: 6510110115
+
 This is a FastAPI project for the "We Travel Together" mock system, built as part of the PSU Mobile Development class in semester 1/2568 (2025).
 
 ## Features
